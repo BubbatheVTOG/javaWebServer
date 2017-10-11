@@ -2,9 +2,13 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+/**
+ * @author Zachary "Bubba" Lichvar
+ */
+
 public class TinyHTTPd{
 
-	static final File contextDirectory = new File(System.getProperty("user.dir"));
+	static final File ROOTPATH = new File(System.getProperty("user.dir"));
 
 	public static void main(String[] args){
 		new TinyHTTPd();
@@ -33,50 +37,21 @@ public class TinyHTTPd{
 		}
 
 		public void run(){
+
+			String[] request;
+
 			try{
 				BufferedReader in = new BufferedReader(
 						new InputStreamReader(
 							client.getInputStream(),"8859_1"));
 
-				PrintWriter out = new PrintWriter(
-						new OutputStreamWriter(
-							client.getOutputStream(),"8859_1"),true);
+				System.out.println(this.handleRequest(in.readLine().split(" ")));
 
-				String[] request = in.readLine().split(" ");
-
-				if(request.length > 2){
-					if(Arrays.asList(request).contains("GET")){
-						System.out.println(sb.append("New GET from: ")
-								.append(client.getInetAddress()
-									.getHostAddress()));
-						if(request[1].equalsIgnoreCase("/")){
-							request[1]=sb.append(contextDirectory.getName())
-								.append("/")
-								.append(request[1])
-								.append("index.html")
-								.toString();
-
-							out.write(this.getRequestedFileAsString(request[1]));
-							out.flush();
-
-							// }else{
-							// System.out.println(sb.append("Illegal directory request from: ")
-							// .append(client.getInetAddress()
-							// .getHostAddress()));
-							// Thread.currentThread().join();
-						}
-					}else{
-						System.out.println(sb.append("Unsupported request from :")
-								.append(client.getInetAddress()
-									.getHostAddress()));
-					}
-				}else{
-					System.out.println(sb.append("Malformed request from :")
-							.append(client.getInetAddress()
-								.getHostAddress()));
-				}
+				client.getOutputStream()
+					.write(this.handleRequest(in.readLine().split(" ")).getBytes());
 
 				client.close();
+
 			}catch(FileNotFoundException fnf){
 				System.err.println("File not found!\nIssue at TinyHTTPd.ClientConnection.run()");
 			}catch(IOException ioe){
@@ -87,17 +62,152 @@ public class TinyHTTPd{
 			}
 		}
 
-		private String getRequestedFileAsString(String request) throws IOException,
-			FileNotFoundException{
-				System.out.println(new File(request).getAbsolutePath());
-				BufferedReader br = new BufferedReader(
-						new FileReader(request));
-				StringBuilder localsb = new StringBuilder();
-				String data = null;
-				while((data=br.readLine()) != null){
-					localsb.append(data);
+		private String handleRequest(String[] request) throws FileNotFoundException{
+
+			String data = null;
+
+			// for(String r: request){
+			// System.out.println(r);
+			// }
+
+			switch(request[0]){
+				case "GET":
+					data = this.generateResponse(200,"OK",this.handleGET(request[1]));
+					break;
+				case "POST":
+					data = this.generateResponse(501,"Unsupported Request!",null);
+					break;
+				case "HEAD":
+					data = this.generateResponse(501,"Unsupported Request!",null);
+					break;
+				case "PUT":
+					data = this.generateResponse(501,"Unsupported Request!",null);
+					break;
+				case "OPTIONS":
+					data = this.generateResponse(501,"Unsupported Request!",null);
+					break;
+				case "DELETE":
+					data = this.generateResponse(501,"Unsupported Request!",null);
+					break;
+				case "CONNECT":
+					data = this.generateResponse(501,"Unsupported Request!",null);
+					break;
+				default:
+					data = this.generateResponse(501,"Unsupported Request!",null);
+					break;
+			}
+			return data;
+		}
+
+		private String handleGET(String request) throws FileNotFoundException{
+
+			StringBuilder sb = new StringBuilder();
+			File accessFile = null;
+			String data = null;
+
+			if(request.equalsIgnoreCase("/")){
+				accessFile = new File(sb.append(ROOTPATH.getAbsolutePath())
+						.append("/")
+						.append("index.html")
+						.toString());
+			}else{
+				accessFile = new File(sb.append(ROOTPATH.getAbsolutePath())
+						.append("/")
+						.append(request)
+						.toString());
+			}
+
+			try{
+				BufferedReader br = new BufferedReader(new FileReader(accessFile));
+				while((data = br.readLine()) != null){
+					data += br.readLine();
 				}
-				return localsb.toString();
+			}catch(FileNotFoundException fnf){
+				return this.generateResponse(404,"File not Found",null);
+			}catch(IOException ioe){
+				return this.generateResponse(403,"Permission denied!",null);
+			}catch(Exception e){
+				System.err.println("Hit unexpected error!");
+				e.printStackTrace();
+				return this.generateResponse(500,"Unknown Issue!",null);
+			}
+			return this.generateResponse(200,"OK",data);
+		}
+
+		private String generateResponse(int status, String responseCode, String data){
+
+			StringBuilder sb = new StringBuilder();
+
+			//I'll form the head.
+			String response = null;
+			String contentLength = null;
+			String header = null;
+			String http1 = "HTTP/1.1";
+			String contentType = "Content-type: text/html";
+
+			if(data != null){
+				contentLength = sb.append("Content-Length: ")
+					.append(data.length())
+					.toString();
+
+				sb.setLength(0);
+				sb.trimToSize();
+
+				header = sb.append(http1)
+					.append(" ")
+					.append(status)
+					.append(" ")
+					.append(responseCode)
+					.append("\r\n")
+					.append(contentType)
+					.append(" ")
+					.append(contentLength)
+					.append("\r\n")
+					.toString();
+
+			}else{
+				header = sb.append(http1)
+					.append(" ")
+					.append(status)
+					.append(" ")
+					.append(responseCode)
+					// .append("\n")
+					.toString();
+			}
+
+			sb.setLength(0);
+			sb.trimToSize();
+
+			//Simple http return statuses.
+			//TODO:418 "I'm a teapot!" RFC 2324
+			switch(status){
+				case 200:
+					response = sb.append(header)
+						.append(data)
+						.toString();
+					break;
+				case 401:
+					response = sb.append(header)
+						.toString();
+					break;
+				case 404:
+					response = sb.append(header)
+						.toString();
+					break;
+				case 500:
+					response = sb.append(header)
+						.toString();
+					break;
+				case 501:
+					response = sb.append(header)
+						.toString();
+					break;
+				default:
+					//HOW DID YOU GET HERE???
+					break;
+			}
+			return response;
 		}
 	}
 }
+
