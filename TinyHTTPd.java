@@ -3,6 +3,9 @@ import java.net.*;
 import java.util.*;
 
 public class TinyHTTPd{
+
+	static final File contextDirectory = new File(System.getProperty("user.dir"));
+
 	public static void main(String[] args){
 		new TinyHTTPd();
 	}
@@ -47,7 +50,8 @@ public class TinyHTTPd{
 								.append(client.getInetAddress()
 									.getHostAddress()));
 						if(request[1].equalsIgnoreCase("/")){
-							request[1]=sb.append(System.getProperty("user.dir"))
+							request[1]=sb.append(contextDirectory.getName())
+								.append("/")
 								.append(request[1])
 								.append("index.html")
 								.toString();
@@ -85,7 +89,7 @@ public class TinyHTTPd{
 
 		private String getRequestedFileAsString(String request) throws IOException,
 			FileNotFoundException{
-				//System.out.println(new File(request).getAbsolutePath());
+				System.out.println(new File(request).getAbsolutePath());
 				BufferedReader br = new BufferedReader(
 						new FileReader(request));
 				StringBuilder localsb = new StringBuilder();
