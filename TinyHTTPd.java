@@ -62,7 +62,7 @@ public class TinyHTTPd{
 			}
 		}
 
-		private String handleRequest(String[] request) throws FileNotFoundException{
+		private String handleRequest(String[] request){
 
 			String data = null;
 
@@ -99,29 +99,30 @@ public class TinyHTTPd{
 			return data;
 		}
 
-		private String handleGET(String request) throws FileNotFoundException{
+		private String handleGET(String request){
 
 			StringBuilder sb = new StringBuilder();
-			File accessFile = null;
 			String data = null;
 
-			if(request.equalsIgnoreCase("/")){
-				accessFile = new File(sb.append(ROOTPATH.getAbsolutePath())
-						.append("/")
-						.append("index.html")
-						.toString());
-			}else{
-				accessFile = new File(sb.append(ROOTPATH.getAbsolutePath())
-						.append("/")
-						.append(request)
-						.toString());
-			}
-
 			try{
+				File accessFile = null;
+				if(request.equalsIgnoreCase("/")){
+					accessFile = new File(sb.append(ROOTPATH.getAbsolutePath())
+							.append("/")
+							.append("index.html")
+							.toString());
+				}else{
+					accessFile = new File(sb.append(ROOTPATH.getAbsolutePath())
+							.append("/")
+							.append(request)
+							.toString());
+				}
+
 				BufferedReader br = new BufferedReader(new FileReader(accessFile));
 				while((data = br.readLine()) != null){
 					data += br.readLine();
 				}
+
 			}catch(FileNotFoundException fnf){
 				return this.generateResponse(404,"File not Found",null);
 			}catch(IOException ioe){
@@ -145,7 +146,7 @@ public class TinyHTTPd{
 			String http1 = "HTTP/1.1";
 			String contentType = "Content-type: text/html";
 
-			if(data != null){
+			if(status == 200){
 				contentLength = sb.append("Content-Length: ")
 					.append(data.length())
 					.toString();
@@ -154,22 +155,22 @@ public class TinyHTTPd{
 				sb.trimToSize();
 
 				header = sb.append(http1)
-					.append(" ")
+					// .append(" ")
 					.append(status)
-					.append(" ")
+					// .append(" ")
 					.append(responseCode)
 					.append("\r\n")
 					.append(contentType)
-					.append(" ")
+					// .append(" ")
 					.append(contentLength)
 					.append("\r\n")
 					.toString();
 
 			}else{
 				header = sb.append(http1)
-					.append(" ")
+					// .append(" ")
 					.append(status)
-					.append(" ")
+					// .append(" ")
 					.append(responseCode)
 					// .append("\n")
 					.toString();
