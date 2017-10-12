@@ -23,14 +23,13 @@ public class TinyHTTPd{
 		}catch(BindException be){
 			System.err.println("BindException! Please select a different port.");
 		}catch(Exception E){
-			System.err.println("We don't know how we got here.\n");
+			System.err.println("We don't know how we got here. TinyHTTPd().\n");
 			E.printStackTrace();
 		}
 	}
 
 	class ClientConnection extends Thread{
 		private Socket client;
-		private StringBuilder sb = new StringBuilder();
 
 		public ClientConnection(Socket client){
 			this.client = client;
@@ -38,14 +37,12 @@ public class TinyHTTPd{
 
 		public void run(){
 
-			String[] request;
+			//String[] request;
 
 			try{
 				BufferedReader in = new BufferedReader(
 						new InputStreamReader(
 							client.getInputStream(),"8859_1"));
-
-				System.out.println(this.handleRequest(in.readLine().split(" ")));
 
 				client.getOutputStream()
 					.write(this.handleRequest(in.readLine().split(" ")).getBytes());
@@ -57,14 +54,14 @@ public class TinyHTTPd{
 			}catch(IOException ioe){
 				System.err.println("IOException!\nIssue at TinyHTTPd.ClientConnection.run()");
 			}catch(Exception E){
-				System.err.println("We don't know how we got here.\n");
+				System.err.println("We don't know how we got here. TinyHTTPd.ClientConnection().\n");
 				E.printStackTrace();
 			}
 		}
 
 		private String handleRequest(String[] request){
 
-			String data = null;
+			String data = "";
 
 			// for(String r: request){
 			// System.out.println(r);
@@ -101,27 +98,22 @@ public class TinyHTTPd{
 
 		private String handleGET(String request){
 
-			StringBuilder sb = new StringBuilder();
-			String data = null;
+			String data = "";
 
 			try{
 				File accessFile = null;
 				if(request.equalsIgnoreCase("/")){
-					accessFile = new File(sb.append(ROOTPATH.getAbsolutePath())
-							.append("/")
-							.append("index.html")
-							.toString());
+					accessFile = new File(ROOTPATH.getAbsolutePath()+"/index.html");
 				}else{
-					accessFile = new File(sb.append(ROOTPATH.getAbsolutePath())
-							.append("/")
-							.append(request)
-							.toString());
+					accessFile = new File(ROOTPATH.getAbsolutePath()+"/"+request);
 				}
 
 				BufferedReader br = new BufferedReader(new FileReader(accessFile));
+
 				while((data = br.readLine()) != null){
 					data += br.readLine();
 				}
+
 
 			}catch(FileNotFoundException fnf){
 				return this.generateResponse(404,"File not Found",null);
@@ -132,81 +124,71 @@ public class TinyHTTPd{
 				e.printStackTrace();
 				return this.generateResponse(500,"Unknown Issue!",null);
 			}
+			assert data != null;
 			return this.generateResponse(200,"OK",data);
 		}
 
 		private String generateResponse(int status, String responseCode, String data){
 
-			StringBuilder sb = new StringBuilder();
-
 			//I'll form the head.
-			String response = null;
-			String contentLength = null;
-			String header = null;
-			String http1 = "HTTP/1.1";
-			String contentType = "Content-type: text/html";
+			String response = "";
+			String contentLength = "";
+			String header = "";
+			String http1 = "HTTP/1.1 ";
+			String contentType = " Content-type: text/html";
 
-			if(status == 200){
-				contentLength = sb.append("Content-Length: ")
-					.append(data.length())
-					.toString();
+			if(data != null){
+				header = http1+status+" "+responseCode+"\n\r"+contentType+"Content-Length: "+data.length()+"\r\n";
+				// contentLength = contentLengthBuilder.append("Content-Length: ")
+				// .append(data.length())
+				// .toString();
 
-				sb.setLength(0);
-				sb.trimToSize();
-
-				header = sb.append(http1)
-					// .append(" ")
-					.append(status)
-					// .append(" ")
-					.append(responseCode)
-					.append("\r\n")
-					.append(contentType)
-					// .append(" ")
-					.append(contentLength)
-					.append("\r\n")
-					.toString();
+				// header = headerBuilder.append(http1)
+				// // .append(" ")
+				// .append(status)
+				// .append(" ")
+				// .append(responseCode)
+				// .append("\r\n")
+				// .append(contentType)
+				// // .append(" ")
+				// .append(contentLength)
+				// .append("\r\n")
+				// .toString();
 
 			}else{
-				header = sb.append(http1)
-					// .append(" ")
-					.append(status)
-					// .append(" ")
-					.append(responseCode)
-					// .append("\n")
-					.toString();
+				header = http1+status+" "+responseCode+"\n\r";
+				// header = headerBuilder.append(http1)
+				// // .append(" ")
+				// .append(status)
+				// // .append(" ")
+				// .append(responseCode)
+				// // .append("\n")
+				// .toString();
 			}
-
-			sb.setLength(0);
-			sb.trimToSize();
 
 			//Simple http return statuses.
 			//TODO:418 "I'm a teapot!" RFC 2324
 			switch(status){
 				case 200:
-					response = sb.append(header)
-						.append(data)
-						.toString();
+					response = header+data;
 					break;
 				case 401:
-					response = sb.append(header)
-						.toString();
+					response = header;
 					break;
 				case 404:
-					response = sb.append(header)
-						.toString();
+					response = header;
 					break;
 				case 500:
-					response = sb.append(header)
-						.toString();
+					response = header;
 					break;
 				case 501:
-					response = sb.append(header)
-						.toString();
+					response = header;
 					break;
 				default:
 					//HOW DID YOU GET HERE???
 					break;
 			}
+			System.out.println(response);
 			return response;
 		}
 	}
