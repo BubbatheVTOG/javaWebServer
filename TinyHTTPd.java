@@ -37,9 +37,11 @@ public class TinyHTTPd{
 		}
 
 		public void run(){
-			System.out.println("Got connection from: "+client.getLocalAddress().getHostAddress());
+			// System.out.println("Got connection from: "+client.getLocalAddress().getHostAddress());
 			try{
 				BufferedReader br = new BufferedReader(new InputStreamReader(client.getInputStream()));
+				OutputStream out = client.getOutputStream();
+				PrintWriter pout = new PrintWriter(new OutputStreamWriter(out));
 				String requestString="";
 				while(br.ready()){
 					requestString += br.readLine();
@@ -49,11 +51,12 @@ public class TinyHTTPd{
 
 				if(debug){
 					for(String s : requestArray){
-						System.out.println(s);
+						// System.out.println(s);
 					}
 				}
 
-				System.out.println(this.handleRequest(requestArray));
+				String formedResponse = this.handleRequest(requestArray);
+				// System.out.println(formedResponse);
 
 			}catch(FileNotFoundException fnf){
 				System.err.println("File not found!\nIssue at TinyHTTPd.ClientConnection.run()");
@@ -139,7 +142,7 @@ public class TinyHTTPd{
 			String http1 = "HTTP/1.1 ";
 			String contentType = "Content-type: text/html";
 
-			if(!data.equalsIgnoreCase("")){
+			if(data.length()==0){
 				header = http1+status+" "+responseCode+"\r\n"+contentType+" Content-Length: "+data.length()+"\r\n";
 			}else{
 				header = http1+status+" "+responseCode+"\r\n";
@@ -167,8 +170,8 @@ public class TinyHTTPd{
 					//HOW DID YOU GET HERE???
 					break;
 			}
-			System.out.println(response);
 			assert !response.equalsIgnoreCase("");
+			System.out.println(response);
 			return response;
 		}
 	}
