@@ -53,11 +53,7 @@ public class TinyHTTPd{
 					}
 				}
 
-				if(debug){
-					System.out.println(this.handleRequest(requestArray));
-				}
-
-				client.getOutputStream().write(this.handleRequest(requestArray).getBytes());
+				System.out.println(this.handleRequest(requestArray));
 
 			}catch(FileNotFoundException fnf){
 				System.err.println("File not found!\nIssue at TinyHTTPd.ClientConnection.run()");
@@ -121,10 +117,6 @@ public class TinyHTTPd{
 					data += br.readLine();
 				}
 
-				if(debug){
-					System.out.println(data);
-				}
-
 			}catch(FileNotFoundException fnf){
 				return this.generateResponse(404,"File not Found",null);
 			}catch(IOException ioe){
@@ -147,7 +139,7 @@ public class TinyHTTPd{
 			String http1 = "HTTP/1.1 ";
 			String contentType = "Content-type: text/html";
 
-			if(data != null){
+			if(!data.equalsIgnoreCase("")){
 				header = http1+status+" "+responseCode+"\r\n"+contentType+" Content-Length: "+data.length()+"\r\n";
 			}else{
 				header = http1+status+" "+responseCode+"\r\n";
