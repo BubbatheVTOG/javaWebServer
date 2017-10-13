@@ -53,6 +53,12 @@ public class TinyHTTPd{
 					}
 				}
 
+				if(debug){
+					System.out.println(this.handleRequest(requestArray));
+				}
+
+				client.getOutputStream().write(this.handleRequest(requestArray).getBytes());
+
 			}catch(FileNotFoundException fnf){
 				System.err.println("File not found!\nIssue at TinyHTTPd.ClientConnection.run()");
 			}catch(IOException ioe){
@@ -93,7 +99,7 @@ public class TinyHTTPd{
 					data = this.generateResponse(501,"Unsupported Request!",null);
 					break;
 			}
-			assert data.equalsIgnoreCase("");
+			assert !data.equalsIgnoreCase("");
 			return data;
 		}
 
@@ -111,8 +117,12 @@ public class TinyHTTPd{
 
 				BufferedReader br = new BufferedReader(new FileReader(accessFile));
 
-				while((data = br.readLine()) != null){
+				while(br.ready()){
 					data += br.readLine();
+				}
+
+				if(debug){
+					System.out.println(data);
 				}
 
 			}catch(FileNotFoundException fnf){
@@ -124,7 +134,7 @@ public class TinyHTTPd{
 				e.printStackTrace();
 				return this.generateResponse(500,"Unknown Issue!",null);
 			}
-			assert data != null;
+			assert !data.equalsIgnoreCase("");
 			return this.generateResponse(200,"OK",data);
 		}
 
@@ -135,12 +145,12 @@ public class TinyHTTPd{
 			String contentLength = "";
 			String header = "";
 			String http1 = "HTTP/1.1 ";
-			String contentType = " Content-type: text/html";
+			String contentType = "Content-type: text/html";
 
 			if(data != null){
-				header = http1+status+" "+responseCode+"\n\r"+contentType+"Content-Length: "+data.length()+"\r\n";
+				header = http1+status+" "+responseCode+"\r\n"+contentType+" Content-Length: "+data.length()+"\r\n";
 			}else{
-				header = http1+status+" "+responseCode+"\n\r";
+				header = http1+status+" "+responseCode+"\r\n";
 			}
 
 			//Simple http return statuses.
@@ -166,7 +176,7 @@ public class TinyHTTPd{
 					break;
 			}
 			System.out.println(response);
-			assert response.equalsIgnoreCase("");
+			assert !response.equalsIgnoreCase("");
 			return response;
 		}
 	}
