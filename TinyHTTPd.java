@@ -67,10 +67,6 @@ public class TinyHTTPd{
 
 			String data = "";
 
-			// for(String r: request){
-			// System.out.println(r);
-			// }
-
 			switch(request[0]){
 				case "GET":
 					data = this.generateResponse(200,"OK",this.handleGET(request[1]));
