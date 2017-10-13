@@ -8,7 +8,8 @@ import java.util.*;
 
 public class TinyHTTPd{
 
-	static final File ROOTPATH = new File(System.getProperty("user.dir"));
+	static final private File ROOTPATH = new File(System.getProperty("user.dir"));
+	private boolean debug = true;
 
 	public static void main(String[] args){
 		new TinyHTTPd();
@@ -36,18 +37,21 @@ public class TinyHTTPd{
 		}
 
 		public void run(){
-
-			//String[] request;
-
+			System.out.println("Got connection from: "+client.getLocalAddress().getHostAddress());
 			try{
-				BufferedReader in = new BufferedReader(
-						new InputStreamReader(
-							client.getInputStream(),"8859_1"));
+				BufferedReader br = new BufferedReader(new InputStreamReader(client.getInputStream()));
+				String requestString="";
+				while(br.ready()){
+					requestString += br.readLine();
+				}
 
-				client.getOutputStream()
-					.write(this.handleRequest(in.readLine().split(" ")).getBytes());
+				String[] requestArray = requestString.split(" ");
 
-				client.close();
+				if(debug){
+					for(String s : requestArray){
+						System.out.println(s);
+					}
+				}
 
 			}catch(FileNotFoundException fnf){
 				System.err.println("File not found!\nIssue at TinyHTTPd.ClientConnection.run()");
@@ -93,6 +97,7 @@ public class TinyHTTPd{
 					data = this.generateResponse(501,"Unsupported Request!",null);
 					break;
 			}
+			assert data.equalsIgnoreCase("");
 			return data;
 		}
 
@@ -113,7 +118,6 @@ public class TinyHTTPd{
 				while((data = br.readLine()) != null){
 					data += br.readLine();
 				}
-
 
 			}catch(FileNotFoundException fnf){
 				return this.generateResponse(404,"File not Found",null);
@@ -139,31 +143,8 @@ public class TinyHTTPd{
 
 			if(data != null){
 				header = http1+status+" "+responseCode+"\n\r"+contentType+"Content-Length: "+data.length()+"\r\n";
-				// contentLength = contentLengthBuilder.append("Content-Length: ")
-				// .append(data.length())
-				// .toString();
-
-				// header = headerBuilder.append(http1)
-				// // .append(" ")
-				// .append(status)
-				// .append(" ")
-				// .append(responseCode)
-				// .append("\r\n")
-				// .append(contentType)
-				// // .append(" ")
-				// .append(contentLength)
-				// .append("\r\n")
-				// .toString();
-
 			}else{
 				header = http1+status+" "+responseCode+"\n\r";
-				// header = headerBuilder.append(http1)
-				// // .append(" ")
-				// .append(status)
-				// // .append(" ")
-				// .append(responseCode)
-				// // .append("\n")
-				// .toString();
 			}
 
 			//Simple http return statuses.
@@ -189,6 +170,7 @@ public class TinyHTTPd{
 					break;
 			}
 			System.out.println(response);
+			assert response.equalsIgnoreCase("");
 			return response;
 		}
 	}
