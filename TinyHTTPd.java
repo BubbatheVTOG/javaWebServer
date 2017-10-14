@@ -103,7 +103,7 @@ public class TinyHTTPd{
 
 		private String handleGET(String request){
 
-			String data = "";
+			String fileData = "";
 
 			try{
 				File accessFile = null;
@@ -116,7 +116,7 @@ public class TinyHTTPd{
 				BufferedReader br = new BufferedReader(new FileReader(accessFile));
 
 				while(br.ready()){
-					data += br.readLine();
+					fileData += br.readLine();
 				}
 
 			}catch(FileNotFoundException fnf){
@@ -128,8 +128,8 @@ public class TinyHTTPd{
 				e.printStackTrace();
 				return this.generateResponse(500,"Unknown Issue!",null);
 			}
-			assert !data.equalsIgnoreCase("");
-			return data;
+			assert !fileData.equalsIgnoreCase("");
+			return fileData;
 		}
 
 		private String generateResponse(int status, String responseCode, String data){
