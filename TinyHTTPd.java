@@ -1,15 +1,23 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.text.*;
 
 /**
  * @author Zachary "Bubba" Lichvar
+ * List of resources:
+ * HTTP/1.1 Stuff:
+ *	https://en.wikipedia.org/wiki/List_of_HTTP_header_fields
+ *	http://www.and.org/texts/server-http
+ *
  */
 
 public class TinyHTTPd{
 
 	static final private File ROOTPATH = new File(System.getProperty("user.dir"));
-	private boolean debug = true;
+
+	private String ServerName = "http://foo.bar.edu/";
+	private String ServerVer = "Server: BubbasBadWebServer/1.0.0";
 
 	public static void main(String[] args){
 		new TinyHTTPd();
@@ -45,20 +53,14 @@ public class TinyHTTPd{
 					requestString += br.readLine();
 				}
 
-				String[] requestArray = requestString.split(" ");
+				// String[] requestArray = requestString.split(" ");
 
-				if(debug){
-					for(String s : requestArray){
-						// System.out.println(s);
-					}
-				}
+				client.getOutputStream()
+					.write(
+							this.handleRequest(
+								requestString.split(" "))
+							.getBytes());
 
-				PrintWriter pout = new PrintWriter(new OutputStreamWriter(client.getOutputStream()));
-				pout.write(this.handleRequest(requestArray));
-				pout.flush();
-
-			}catch(FileNotFoundException fnf){
-				System.err.println("File not found!\nIssue at TinyHTTPd.ClientConnection.run()");
 			}catch(IOException ioe){
 				System.err.println("IOException!\nIssue at TinyHTTPd.ClientConnection.run()");
 			}catch(Exception E){
@@ -135,17 +137,27 @@ public class TinyHTTPd{
 		private String generateResponse(int status, String responseCode, String data){
 
 			//I'll form the head.
+			SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM YYYY HH:mm:ss z");
 			String response = "";
-			String contentLength = "Content-Length: ";
 			String header = "";
 			String http1 = "HTTP/1.1 ";
+			String contentLength = "Content-Length: ";
 			String contentType = "Content-type: text/html";
-			final String IFS = "\r\n";
+			String date = sdf.format(new Date());
+			String lastModified = "Last-Modified: "+date;
+			String IFS = "\r\n";
+
 
 			if(data != null){
-				header = http1+status+" "+responseCode+IFS+contentType+IFS+contentLength+data.length()+IFS;
+				header = http1+status+" "+responseCode+IFS+
+					"Date: "+date+IFS+
+					ServerVer+IFS+
+					lastModified+IFS+
+					contentType+IFS+
+					contentLength+data.length()+IFS+
+					IFS;
 			}else{
-				header = http1+status+" "+responseCode+"\r\n";
+				header = http1+status+" "+responseCode+IFS;
 			}
 
 			//Simple http return statuses.
