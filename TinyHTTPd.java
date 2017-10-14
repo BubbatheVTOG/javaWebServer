@@ -40,8 +40,6 @@ public class TinyHTTPd{
 			// System.out.println("Got connection from: "+client.getLocalAddress().getHostAddress());
 			try{
 				BufferedReader br = new BufferedReader(new InputStreamReader(client.getInputStream()));
-				OutputStream out = client.getOutputStream();
-				PrintWriter pout = new PrintWriter(new OutputStreamWriter(out));
 				String requestString="";
 				while(br.ready()){
 					requestString += br.readLine();
@@ -55,8 +53,9 @@ public class TinyHTTPd{
 					}
 				}
 
-				String formedResponse = this.handleRequest(requestArray);
-				// System.out.println(formedResponse);
+				PrintWriter pout = new PrintWriter(new OutputStreamWriter(client.getOutputStream()));
+				pout.write(this.handleRequest(requestArray));
+				pout.flush();
 
 			}catch(FileNotFoundException fnf){
 				System.err.println("File not found!\nIssue at TinyHTTPd.ClientConnection.run()");
@@ -130,20 +129,21 @@ public class TinyHTTPd{
 				return this.generateResponse(500,"Unknown Issue!",null);
 			}
 			assert !data.equalsIgnoreCase("");
-			return this.generateResponse(200,"OK",data);
+			return data;
 		}
 
 		private String generateResponse(int status, String responseCode, String data){
 
 			//I'll form the head.
 			String response = "";
-			String contentLength = "";
+			String contentLength = "Content-Length: ";
 			String header = "";
 			String http1 = "HTTP/1.1 ";
 			String contentType = "Content-type: text/html";
+			final String IFS = "\r\n";
 
-			if(data.length()==0){
-				header = http1+status+" "+responseCode+"\r\n"+contentType+" Content-Length: "+data.length()+"\r\n";
+			if(data != null){
+				header = http1+status+" "+responseCode+IFS+contentType+IFS+contentLength+data.length()+IFS;
 			}else{
 				header = http1+status+" "+responseCode+"\r\n";
 			}
