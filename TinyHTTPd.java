@@ -123,7 +123,7 @@ public class TinyHTTPd{
 			if(request.equalsIgnoreCase("/")){
 				accessFile = new File(ROOTPATH.getAbsolutePath()+"/index.html");
 			}else{
-				accessFile = new File(ROOTPATH.getAbsolutePath()+"/"+request);
+				accessFile = new File(ROOTPATH.getAbsolutePath()+request);
 			}
 
 			DataInputStream dis = new DataInputStream(new FileInputStream(accessFile));
@@ -149,7 +149,7 @@ public class TinyHTTPd{
 			String date = sdf.format(new Date());
 			String lastModified = "Last-Modified: "+date;
 			String IFS = "\r\n";
-
+			String IFStail = "\r\n\r\n";
 
 			if(data != null){
 				header = http1+status+" "+responseCode+IFS+
@@ -203,15 +203,12 @@ public class TinyHTTPd{
 					break;
 			}
 
-			//Form the tail.
-			/*
-			 * for(int i=0; i<IFS.getBytes().length*2;i++){
-			 *         byteList.add(IFS.getBytes());
-			 * }
-			 */
+			byte[] IFSTailBytes = IFStail.getBytes();
+			for(int i=0; i<IFSTailBytes.length;i++){
+				byteList.add(IFSTailBytes[i]);
+			}
 			assert byteList.size() != 0;
 			return byteList;
-
 		}
 	}
 }
