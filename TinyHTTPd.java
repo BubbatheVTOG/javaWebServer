@@ -157,6 +157,8 @@ public class TinyHTTPd{
 		 * This gets the requested file.
 		 *
 		 * @param String The requested file from the client.
+		 * @throws FileNotFoundException
+		 * @throws IOException
 		 * @return ArrayList<Byte> The requested file from the client as Bytes.
 		 */
 		private ArrayList<Byte> handleGET(String request)throws FileNotFoundException, IOException{
