@@ -54,12 +54,17 @@ public class TinyHTTPd{
 					requestString += br.readLine();
 				}
 
-				byte[] response = this.handleRequest(requestString.split(" "));
-				for(int i=0;i<response.length;i++){
-					System.out.print((char)response[i]);
+
+				ArrayList<Byte> response = new ArrayList<Byte>();
+				response.addAll(this.handleRequest(requestString.split(" ")));
+
+				byte[] responseBytes = new byte[response.size()];
+				for(int i=0; i < response.size(); i++){
+					responseBytes[i]=response.get(i);
 				}
+
 				client.getOutputStream()
-					.write(this.handleRequest(requestString.split(" ")));
+					.write(responseBytes);
 
 			}catch(IOException ioe){
 				System.err.println("IOException!\nIssue at TinyHTTPd.ClientConnection.run()");
@@ -69,9 +74,9 @@ public class TinyHTTPd{
 			}
 		}
 
-		private byte[] handleRequest(String[] request){
+		private ArrayList<Byte> handleRequest(String[] request){
 
-			byte[] totalResponseData;
+			ArrayList<Byte> totalResponseData;
 
 			switch(request[0]){
 				case "GET":
@@ -107,13 +112,12 @@ public class TinyHTTPd{
 					totalResponseData = this.generateResponse(501,"Unsupported Request!",null);
 					break;
 			}
-			assert totalResponseData.length == 0;
+			assert totalResponseData.size() == 0;
 			return totalResponseData;
 		}
 
 		private byte[] handleGET(String request)throws FileNotFoundException, IOException{
 
-			byte[] fileData;
 			File accessFile = null;
 
 			if(request.equalsIgnoreCase("/")){
@@ -122,15 +126,18 @@ public class TinyHTTPd{
 				accessFile = new File(ROOTPATH.getAbsolutePath()+"/"+request);
 			}
 
-			FileInputStream fis = new FileInputStream(accessFile);
-
-			fileData = new byte[fis.available()];
-
+			DataInputStream dis = new DataInputStream(new FileInputStream(accessFile));
+			byte[] fileData = new byte[(int)accessFile.length()];
+			int i=0;
+			while(dis.available()>0){
+				fileData[i]=dis.readByte();
+				i++;
+			}
 			assert fileData.length == 0;
 			return fileData;
 		}
 
-		private byte[] generateResponse(int status, String responseCode, byte[] data){
+		private ArrayList<Byte> generateResponse(int status, String responseCode, byte[] data){
 
 			//I'll form the head.
 			SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM YYYY HH:mm:ss z");
@@ -160,7 +167,6 @@ public class TinyHTTPd{
 			}
 
 			byte[] headerBytes = header.getBytes();
-
 			//Simple http return statuses.
 			//TODO:418 "I'm a teapot!" RFC 2324
 			switch(status){
@@ -196,12 +202,8 @@ public class TinyHTTPd{
 					//HOW DID YOU GET HERE???
 					break;
 			}
-			byte[] dataArray = new byte[byteList.size()];
-			for(int i=0; i<byteList.size();i++){
-				dataArray[i] = byteList.get(i);
-			}
-			assert dataArray.length == 0;
-			return dataArray;
+			return byteList;
+
 		}
 	}
 }
