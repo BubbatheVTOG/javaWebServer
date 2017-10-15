@@ -18,7 +18,7 @@ public class TinyHTTPd{
 
 	private String ServerName = "http://foo.bar.com/";
 	private String ServerVer = "Server: BubbasBadWebServer/1.0.0";
-	private ServerSocket boundSocket = new ServerSocket(16789);
+	private ServerSocket boundSocket;
 
 	public static void main(String[] args){
 		new TinyHTTPd();
@@ -26,6 +26,7 @@ public class TinyHTTPd{
 
 	public TinyHTTPd(){
 		try{
+			boundSocket = new ServerSocket(16789);
 			while(true){
 				new ClientConnection(boundSocket.accept()).start();
 			}
@@ -129,7 +130,7 @@ public class TinyHTTPd{
 
 			//I'll form the head.
 			SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM YYYY HH:mm:ss z");
-			byte[] response;
+			ArrayList<Byte> byteList = new ArrayList<Byte>();
 			String header = "";
 			String http1 = "HTTP/1.1 ";
 			String contentLength = "Content-Length: ";
@@ -154,31 +155,48 @@ public class TinyHTTPd{
 					IFS;
 			}
 
+			byte[] headerBytes = header.getBytes();
+
 			//Simple http return statuses.
 			//TODO:418 "I'm a teapot!" RFC 2324
 			switch(status){
 				case 200:
-
+					for(int i=0; i < headerBytes.length; i++){
+						byteList.add(headerBytes[i]);
+					}
+					for(int i=0; i < data.length; i++){
+						byteList.add(data[i]);
+					}
 					break;
 				case 401:
-					response = header.getBytes();
+					for(int i=0; i < headerBytes.length; i++){
+						byteList.add(headerBytes[i]);
+					}
 					break;
 				case 404:
-					response = header.getBytes();
+					for(int i=0; i < headerBytes.length; i++){
+						byteList.add(headerBytes[i]);
+					}
 					break;
 				case 500:
-					response = header.getBytes();
+					for(int i=0; i < headerBytes.length; i++){
+						byteList.add(headerBytes[i]);
+					}
 					break;
 				case 501:
-					response = header.getBytes();
+					for(int i=0; i < headerBytes.length; i++){
+						byteList.add(headerBytes[i]);
+					}
 					break;
 				default:
 					//HOW DID YOU GET HERE???
 					break;
 			}
-			assert response.length !=0;
-			return response;
+			byte[] dataArray = new byte[byteList.size()];
+			for(int i=0; i<byteList.size();i++){
+				dataArray[i] = byteList.get(i);
+			}
+			return dataArray;
 		}
 	}
 }
-
