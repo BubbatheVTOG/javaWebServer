@@ -9,7 +9,22 @@ import java.text.*;
  * HTTP/1.1 Stuff:
  *	https://en.wikipedia.org/wiki/List_of_HTTP_header_fields
  *	http://www.and.org/texts/server-http
- *
+ *	https://tools.ietf.org/html/rfc7231
+ *	https://tools.ietf.org/html/rfc2295
+ *	https://tools.ietf.org/html/rfc2296
+ * How it works:
+ *	1) The server is started.
+ *	2) The client connects to the server.
+ *	3) A instance of ConnectedClient is created and started.
+ *	4) The client sends us their request.
+ *	5) Based on the clients request we decide what to do. (handleRequest())
+ *	6) If the client requested a file, we load the file into memory as
+ *		an ArrayList of bytes. (handleGET())
+ *	7) We construct our response containing the HTTP header, data (if need),
+ *		and tail. (generateResponse())
+ *	8) We send out our respose back to the client.
+ *	9) The ClientConnection has ran its course and is now finished.
+ *	10) Done.
  */
 
 public class TinyHTTPd{
@@ -26,7 +41,9 @@ public class TinyHTTPd{
 
 	public TinyHTTPd(){
 		try{
+			//Get ServerSocket
 			boundSocket = new ServerSocket(16789);
+			//Accept client connections, create instace of a client thread, and start it.
 			while(true){
 				new ClientConnection(boundSocket.accept()).start();
 			}
@@ -41,6 +58,12 @@ public class TinyHTTPd{
 	class ClientConnection extends Thread{
 		private Socket client;
 
+		/**
+		 * Default Constructor.
+		 * This class handles the connected client.
+		 *
+		 * @param Socket The socket the client connected to us with.
+		 */
 		public ClientConnection(Socket client){
 			this.client = client;
 		}
@@ -48,36 +71,50 @@ public class TinyHTTPd{
 		public void run(){
 			// System.out.println("Got connection from: "+client.getLocalAddress().getHostAddress());
 			try{
+				//Get request from the client.
 				BufferedReader br = new BufferedReader(new InputStreamReader(client.getInputStream()));
 				String requestString="";
 				while(br.ready()){
 					requestString += br.readLine();
 				}
 
-
+				//Create an ArrayList with our response.
 				ArrayList<Byte> response = new ArrayList<Byte>();
 				response.addAll(this.handleRequest(requestString.split(" ")));
 
+				//We cannot send an ArrayList. We must convert it to an Array.
 				byte[] responseBytes = new byte[response.size()];
 				for(int i=0; i < response.size(); i++){
 					responseBytes[i]=response.get(i);
 				}
 
+				//Send the client our response.
 				client.getOutputStream()
 					.write(responseBytes);
 
 			}catch(IOException ioe){
 				System.err.println("IOException!\nIssue at TinyHTTPd.ClientConnection.run()");
 			}catch(Exception E){
-				System.err.println("We don't know how we got here. TinyHTTPd.ClientConnection().\n");
+				System.err.println("I don't know how you got here. TinyHTTPd.ClientConnection().\n");
 				E.printStackTrace();
 			}
 		}
 
+		/**
+		 * This method handles the request. The request is typically
+		 * the first string in the request.
+		 *
+		 * @param String[] The entire request from the client
+		 * deliminated by spaces.
+		 * @return ArrayList<Byte> The response formed from the
+		 * clients request.
+		 */
 		private ArrayList<Byte> handleRequest(String[] request){
 
+			//This ArrayList will hold our entire response.
 			ArrayList<Byte> totalResponseData;
 
+			//Define our action based on the client's request.
 			switch(request[0]){
 				case "GET":
 					try{
@@ -116,32 +153,54 @@ public class TinyHTTPd{
 			return totalResponseData;
 		}
 
-		private byte[] handleGET(String request)throws FileNotFoundException, IOException{
+		/**
+		 * This gets the requested file.
+		 *
+		 * @param String The requested file from the client.
+		 * @return ArrayList<Byte> The requested file from the client as Bytes.
+		 */
+		private ArrayList<Byte> handleGET(String request)throws FileNotFoundException, IOException{
 
+			//The file the client wants.
 			File accessFile = null;
+			//The file as bytes that the client wants.
+			ArrayList<Byte> fileData = new ArrayList<Byte>();
 
+			//If the client hasn't requested anything give them the index, otherwise give them what they want.
 			if(request.equalsIgnoreCase("/")){
 				accessFile = new File(ROOTPATH.getAbsolutePath()+"/index.html");
 			}else{
 				accessFile = new File(ROOTPATH.getAbsolutePath()+request);
 			}
 
+			//Read our file and put it in the data list.
 			DataInputStream dis = new DataInputStream(new FileInputStream(accessFile));
-			byte[] fileData = new byte[(int)accessFile.length()];
-			int i=0;
 			while(dis.available()>0){
-				fileData[i]=dis.readByte();
-				i++;
+				fileData.add(dis.readByte());
 			}
-			assert fileData.length != 0;
+			assert fileData.size() != 0;
 			return fileData;
 		}
 
-		private ArrayList<Byte> generateResponse(int status, String responseCode, byte[] data){
+		/**
+		 * This builds the response to the client based on their request
+		 * and our ability to complete it. It will also contain the data
+		 * the client requested if appropriate.
+		 *
+		 * @param int The response status.
+		 * @param String The response message type.
+		 * @param ArrayList<Byte> Additional data we are sending if
+		 * appropriate. Can also be null.
+		 * @return ArrayList<Byte> The full response of bytes we need
+		 * to send to the client.
+		 */
+		private ArrayList<Byte> generateResponse(int status, String responseCode, ArrayList<Byte> data){
 
-			//I'll form the head.
+			//This is our arraylist that will contain our response.
+			ArrayList<Byte> responseByteList = new ArrayList<Byte>();
+
+			//All of this information is needed to make the HTTP header.
 			SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM YYYY HH:mm:ss z");
-			ArrayList<Byte> byteList = new ArrayList<Byte>();
 			String header = "";
 			String http1 = "HTTP/1.1 ";
 			String contentLength = "Content-Length: ";
@@ -151,13 +210,14 @@ public class TinyHTTPd{
 			String IFS = "\r\n";
 			String IFStail = "\r\n\r\n";
 
+			//Form different headers depending on if the client has asked for data.
 			if(data != null){
 				header = http1+status+" "+responseCode+IFS+
 					"Date: "+date+IFS+
 					ServerVer+IFS+
 					lastModified+IFS+
 					contentType+IFS+
-					contentLength+data.length+IFS+
+					contentLength+data.size()+IFS+
 					IFS;
 			}else{
 				header = http1+status+" "+responseCode+IFS+
@@ -168,34 +228,33 @@ public class TinyHTTPd{
 
 			byte[] headerBytes = header.getBytes();
 			//Simple http return statuses.
+			//Build our response in an ArrayList of bytes depending on the response code.
 			//TODO:418 "I'm a teapot!" RFC 2324
 			switch(status){
 				case 200:
 					for(int i=0; i < headerBytes.length; i++){
-						byteList.add(headerBytes[i]);
+						responseByteList.add(headerBytes[i]);
 					}
-					for(int i=0; i < data.length; i++){
-						byteList.add(data[i]);
-					}
+					responseByteList.addAll(data);
 					break;
 				case 403:
 					for(int i=0; i < headerBytes.length; i++){
-						byteList.add(headerBytes[i]);
+						responseByteList.add(headerBytes[i]);
 					}
 					break;
 				case 404:
 					for(int i=0; i < headerBytes.length; i++){
-						byteList.add(headerBytes[i]);
+						responseByteList.add(headerBytes[i]);
 					}
 					break;
 				case 500:
 					for(int i=0; i < headerBytes.length; i++){
-						byteList.add(headerBytes[i]);
+						responseByteList.add(headerBytes[i]);
 					}
 					break;
 				case 501:
 					for(int i=0; i < headerBytes.length; i++){
-						byteList.add(headerBytes[i]);
+						responseByteList.add(headerBytes[i]);
 					}
 					break;
 				default:
@@ -203,12 +262,13 @@ public class TinyHTTPd{
 					break;
 			}
 
+			//We need to append a tail to our response.
 			byte[] IFSTailBytes = IFStail.getBytes();
 			for(int i=0; i<IFSTailBytes.length;i++){
-				byteList.add(IFSTailBytes[i]);
+				responseByteList.add(IFSTailBytes[i]);
 			}
-			assert byteList.size() != 0;
-			return byteList;
+			assert responseByteList.size() != 0;
+			return responseByteList;
 		}
 	}
 }
