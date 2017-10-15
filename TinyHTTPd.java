@@ -112,7 +112,7 @@ public class TinyHTTPd{
 					totalResponseData = this.generateResponse(501,"Unsupported Request!",null);
 					break;
 			}
-			assert totalResponseData.size() == 0;
+			assert totalResponseData.size() != 0;
 			return totalResponseData;
 		}
 
@@ -133,7 +133,7 @@ public class TinyHTTPd{
 				fileData[i]=dis.readByte();
 				i++;
 			}
-			assert fileData.length == 0;
+			assert fileData.length != 0;
 			return fileData;
 		}
 
@@ -202,6 +202,14 @@ public class TinyHTTPd{
 					//HOW DID YOU GET HERE???
 					break;
 			}
+
+			//Form the tail.
+			/*
+			 * for(int i=0; i<IFS.getBytes().length*2;i++){
+			 *         byteList.add(IFS.getBytes());
+			 * }
+			 */
+			assert byteList.size() != 0;
 			return byteList;
 
 		}
