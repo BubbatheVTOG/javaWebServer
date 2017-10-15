@@ -83,33 +83,33 @@ public class TinyHTTPd{
 					try{
 						totalResponseData = this.generateResponse(200,"OK",this.handleGET(request[1]));
 					}catch(FileNotFoundException fnf){
-						totalResponseData = this.generateResponse(401,"File not Found!",null);
+						totalResponseData = this.generateResponse(404,"Not Found",null);
 					}catch(IOException ioe){
 						totalResponseData = this.generateResponse(403,"Unauthorized",null);
 					}catch(Exception e){
-						totalResponseData = this.generateResponse(501,"Internal Error",null);
+						totalResponseData = this.generateResponse(501,"Not Implemented",null);
 					}
 					break;
 				case "POST":
-					totalResponseData = this.generateResponse(501,"Unsupported Request!",null);
+					totalResponseData = this.generateResponse(501,"Not Implemented",null);
 					break;
 				case "HEAD":
-					totalResponseData = this.generateResponse(501,"Unsupported Request!",null);
+					totalResponseData = this.generateResponse(501,"Not Implemented",null);
 					break;
 				case "PUT":
-					totalResponseData = this.generateResponse(501,"Unsupported Request!",null);
+					totalResponseData = this.generateResponse(501,"Not Implemented",null);
 					break;
 				case "OPTIONS":
-					totalResponseData = this.generateResponse(501,"Unsupported Request!",null);
+					totalResponseData = this.generateResponse(501,"Not Implemented",null);
 					break;
 				case "DELETE":
-					totalResponseData = this.generateResponse(501,"Unsupported Request!",null);
+					totalResponseData = this.generateResponse(501,"Not Implemented",null);
 					break;
 				case "CONNECT":
-					totalResponseData = this.generateResponse(501,"Unsupported Request!",null);
+					totalResponseData = this.generateResponse(501,"Not Implemented",null);
 					break;
 				default:
-					totalResponseData = this.generateResponse(501,"Unsupported Request!",null);
+					totalResponseData = this.generateResponse(501,"Not Implemented",null);
 					break;
 			}
 			assert totalResponseData.size() != 0;
@@ -178,7 +178,7 @@ public class TinyHTTPd{
 						byteList.add(data[i]);
 					}
 					break;
-				case 401:
+				case 403:
 					for(int i=0; i < headerBytes.length; i++){
 						byteList.add(headerBytes[i]);
 					}
