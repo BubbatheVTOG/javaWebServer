@@ -16,8 +16,9 @@ public class TinyHTTPd{
 
 	static final private File ROOTPATH = new File(System.getProperty("user.dir"));
 
-	private String ServerName = "http://foo.bar.edu/";
+	private String ServerName = "http://foo.bar.com/";
 	private String ServerVer = "Server: BubbasBadWebServer/1.0.0";
+	private ServerSocket boundSocket = new ServerSocket(16789);
 
 	public static void main(String[] args){
 		new TinyHTTPd();
@@ -25,7 +26,6 @@ public class TinyHTTPd{
 
 	public TinyHTTPd(){
 		try{
-			ServerSocket boundSocket = new ServerSocket(16789);
 			while(true){
 				new ClientConnection(boundSocket.accept()).start();
 			}
@@ -53,13 +53,8 @@ public class TinyHTTPd{
 					requestString += br.readLine();
 				}
 
-				// String[] requestArray = requestString.split(" ");
-
 				client.getOutputStream()
-					.write(
-							this.handleRequest(
-								requestString.split(" "))
-							.getBytes());
+					.write(this.handleRequest(requestString.split(" ")));
 
 			}catch(IOException ioe){
 				System.err.println("IOException!\nIssue at TinyHTTPd.ClientConnection.run()");
@@ -69,76 +64,72 @@ public class TinyHTTPd{
 			}
 		}
 
-		private String handleRequest(String[] request){
+		private byte[] handleRequest(String[] request){
 
-			String data = "";
+			byte[] totalResponseData;
 
 			switch(request[0]){
 				case "GET":
-					data = this.generateResponse(200,"OK",this.handleGET(request[1]));
+					try{
+						totalResponseData = this.generateResponse(200,"OK",this.handleGET(request[1]));
+					}catch(FileNotFoundException fnf){
+						totalResponseData = this.generateResponse(401,"File not Found!",null);
+					}catch(IOException ioe){
+						totalResponseData = this.generateResponse(403,"Unauthorized",null);
+					}catch(Exception e){
+						totalResponseData = this.generateResponse(501,"Internal Error",null);
+					}
 					break;
 				case "POST":
-					data = this.generateResponse(501,"Unsupported Request!",null);
+					totalResponseData = this.generateResponse(501,"Unsupported Request!",null);
 					break;
 				case "HEAD":
-					data = this.generateResponse(501,"Unsupported Request!",null);
+					totalResponseData = this.generateResponse(501,"Unsupported Request!",null);
 					break;
 				case "PUT":
-					data = this.generateResponse(501,"Unsupported Request!",null);
+					totalResponseData = this.generateResponse(501,"Unsupported Request!",null);
 					break;
 				case "OPTIONS":
-					data = this.generateResponse(501,"Unsupported Request!",null);
+					totalResponseData = this.generateResponse(501,"Unsupported Request!",null);
 					break;
 				case "DELETE":
-					data = this.generateResponse(501,"Unsupported Request!",null);
+					totalResponseData = this.generateResponse(501,"Unsupported Request!",null);
 					break;
 				case "CONNECT":
-					data = this.generateResponse(501,"Unsupported Request!",null);
+					totalResponseData = this.generateResponse(501,"Unsupported Request!",null);
 					break;
 				default:
-					data = this.generateResponse(501,"Unsupported Request!",null);
+					totalResponseData = this.generateResponse(501,"Unsupported Request!",null);
 					break;
 			}
-			assert !data.equalsIgnoreCase("");
-			return data;
+			assert totalResponseData.length !=0;
+			return totalResponseData;
 		}
 
-		private String handleGET(String request){
+		private byte[] handleGET(String request)throws FileNotFoundException, IOException{
 
-			String fileData = "";
+			byte[] fileData;
+			File accessFile = null;
 
-			try{
-				File accessFile = null;
-				if(request.equalsIgnoreCase("/")){
-					accessFile = new File(ROOTPATH.getAbsolutePath()+"/index.html");
-				}else{
-					accessFile = new File(ROOTPATH.getAbsolutePath()+"/"+request);
-				}
-
-				BufferedReader br = new BufferedReader(new FileReader(accessFile));
-
-				while(br.ready()){
-					fileData += br.readLine();
-				}
-
-			}catch(FileNotFoundException fnf){
-				return this.generateResponse(404,"File not Found",null);
-			}catch(IOException ioe){
-				return this.generateResponse(403,"Permission denied!",null);
-			}catch(Exception e){
-				System.err.println("Hit unexpected error!");
-				e.printStackTrace();
-				return this.generateResponse(500,"Unknown Issue!",null);
+			if(request.equalsIgnoreCase("/")){
+				accessFile = new File(ROOTPATH.getAbsolutePath()+"/index.html");
+			}else{
+				accessFile = new File(ROOTPATH.getAbsolutePath()+"/"+request);
 			}
-			assert !fileData.equalsIgnoreCase("");
+
+			FileInputStream fis = new FileInputStream(accessFile);
+
+			fileData = new byte[fis.available()];
+
+			assert fileData.length != 0;
 			return fileData;
 		}
 
-		private String generateResponse(int status, String responseCode, String data){
+		private byte[] generateResponse(int status, String responseCode, byte[] data){
 
 			//I'll form the head.
 			SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM YYYY HH:mm:ss z");
-			String response = "";
+			byte[] response;
 			String header = "";
 			String http1 = "HTTP/1.1 ";
 			String contentLength = "Content-Length: ";
@@ -154,36 +145,38 @@ public class TinyHTTPd{
 					ServerVer+IFS+
 					lastModified+IFS+
 					contentType+IFS+
-					contentLength+data.length()+IFS+
+					contentLength+data.length+IFS+
 					IFS;
 			}else{
-				header = http1+status+" "+responseCode+IFS;
+				header = http1+status+" "+responseCode+IFS+
+					"Date: "+date+IFS+
+					ServerVer+IFS+
+					IFS;
 			}
 
 			//Simple http return statuses.
 			//TODO:418 "I'm a teapot!" RFC 2324
 			switch(status){
 				case 200:
-					response = header+data;
+
 					break;
 				case 401:
-					response = header;
+					response = header.getBytes();
 					break;
 				case 404:
-					response = header;
+					response = header.getBytes();
 					break;
 				case 500:
-					response = header;
+					response = header.getBytes();
 					break;
 				case 501:
-					response = header;
+					response = header.getBytes();
 					break;
 				default:
 					//HOW DID YOU GET HERE???
 					break;
 			}
-			assert !response.equalsIgnoreCase("");
-			System.out.println(response);
+			assert response.length !=0;
 			return response;
 		}
 	}
