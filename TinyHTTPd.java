@@ -254,15 +254,6 @@ public class TinyHTTPd{
 					.append(IFS)
 					.append(IFS)
 					.toString();
-				/*
-				 * header = http1+status+" "+responseCode+IFS+
-				 *         "Date: "+date+IFS+
-				 *         ServerVer+IFS+
-				 *         lastModified+IFS+
-				 *         contentType+IFS+
-				 *         contentLength+data.size()+IFS+
-				 *         IFS;
-				 */
 			}else{
 				StringBuilder headerBuilder = new StringBuilder();
 				header = headerBuilder.append(http1)
@@ -277,12 +268,6 @@ public class TinyHTTPd{
 					.append(IFS)
 					.append(IFS)
 					.toString();
-				/*
-				 * header = http1+status+" "+responseCode+IFS+
-				 *         "Date: "+date+IFS+
-				 *         ServerVer+IFS+
-				 *         IFS;
-				 */
 			}
 
 			byte[] headerBytes = header.getBytes();
