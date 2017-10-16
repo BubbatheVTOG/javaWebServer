@@ -14,4 +14,4 @@ I just wanted to see if I could write a web server that responded to GET request
 
 If you do try and use this...WTF is wrong with you! DON'T DO THAT! 
 
-It does work.
+It does work...you know kinda.../shrug.
