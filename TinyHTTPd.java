@@ -74,9 +74,12 @@ public class TinyHTTPd{
 				//Get request from the client.
 				BufferedReader br = new BufferedReader(new InputStreamReader(client.getInputStream()));
 				String requestString="";
+				StringBuilder requestBuilder = new StringBuilder();
 				while(br.ready()){
-					requestString += br.readLine();
+					requestBuilder.append(br.readLine());
 				}
+
+				requestString = requestBuilder.toString();
 
 				//Create an ArrayList with our response.
 				ArrayList<Byte> response = new ArrayList<Byte>();
@@ -214,18 +217,54 @@ public class TinyHTTPd{
 
 			//Form different headers depending on if the client has asked for data.
 			if(data != null){
-				header = http1+status+" "+responseCode+IFS+
-					"Date: "+date+IFS+
-					ServerVer+IFS+
-					lastModified+IFS+
-					contentType+IFS+
-					contentLength+data.size()+IFS+
-					IFS;
+				StringBuilder headerBuilder = new StringBuilder();
+				header = headerBuilder.append(http1)
+					.append(status)
+					.append(" ")
+					.append(responseCode)
+					.append(IFS)
+					.append("Date: ")
+					.append(date)
+					.append(ServerVer)
+					.append(IFS)
+					.append(lastModified)
+					.append(IFS)
+					.append(contentType)
+					.append(IFS)
+					.append(contentLength)
+					.append(data.size())
+					.append(IFS)
+					.append(IFS)
+					.toString();
+				/*
+				 * header = http1+status+" "+responseCode+IFS+
+				 *         "Date: "+date+IFS+
+				 *         ServerVer+IFS+
+				 *         lastModified+IFS+
+				 *         contentType+IFS+
+				 *         contentLength+data.size()+IFS+
+				 *         IFS;
+				 */
 			}else{
-				header = http1+status+" "+responseCode+IFS+
-					"Date: "+date+IFS+
-					ServerVer+IFS+
-					IFS;
+				StringBuilder headerBuilder = new StringBuilder();
+				header = headerBuilder.append(http1)
+					.append(status)
+					.append(" ")
+					.append(responseCode)
+					.append(IFS)
+					.append("Date: ")
+					.append(date)
+					.append(IFS)
+					.append(ServerVer)
+					.append(IFS)
+					.append(IFS)
+					.toString();
+				/*
+				 * header = http1+status+" "+responseCode+IFS+
+				 *         "Date: "+date+IFS+
+				 *         ServerVer+IFS+
+				 *         IFS;
+				 */
 			}
 
 			byte[] headerBytes = header.getBytes();
