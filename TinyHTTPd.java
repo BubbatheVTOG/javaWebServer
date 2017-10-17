@@ -52,15 +52,26 @@ public class TinyHTTPd{
 	// private String ServerName = "http://foo.bar.com/";
 	private String ServerVer = "Server: BubbasBadWebServer/1.0.0";
 	private ServerSocket boundSocket;
+	private static boolean verboseOutput = false;
+	// private static boolean veryVerboseOutput = false;
 
 	public static void main(String[] args){
-		new TinyHTTPd();
+		if(args.length == 0){
+			new TinyHTTPd(16789);
+		}else if(args.length>0){
+			//ArrayList of args (Its easier use builtin api for parsing.)
+			List<String> argsList = Arrays.asList(args);
+			verboseOutput = argsList.contains("-v");
+			// veryVerboseOutput = argsList.contains("-vv");
+
+			new TinyHTTPd(16789);
+		}
 	}
 
-	public TinyHTTPd(){
+	public TinyHTTPd(int portNumber){
 		try{
 			//Get ServerSocket
-			boundSocket = new ServerSocket(16789);
+			boundSocket = new ServerSocket(portNumber);
 			//Accept client connections, create instace of a client thread, and start it.
 			while(true){
 				new ClientConnection(boundSocket.accept()).start();
@@ -98,6 +109,12 @@ public class TinyHTTPd{
 				}
 
 				requestString = requestBuilder.toString();
+
+				//Verbose Output
+				if(verboseOutput){
+					System.out.println("Got connection from: "+client.getInetAddress().toString());
+					System.out.println("Request String: "+requestString);
+				}
 
 				//Create an ArrayList with our response.
 				ArrayList<Byte> response = new ArrayList<Byte>();
