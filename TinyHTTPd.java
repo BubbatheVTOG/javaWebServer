@@ -49,7 +49,7 @@ public class TinyHTTPd{
 
 	static final private File ROOTPATH = new File(System.getProperty("user.dir"));
 
-	private String ServerName = "http://foo.bar.com/";
+	// private String ServerName = "http://foo.bar.com/";
 	private String ServerVer = "Server: BubbasBadWebServer/1.0.0";
 	private ServerSocket boundSocket;
 
@@ -145,7 +145,7 @@ public class TinyHTTPd{
 					}catch(IOException ioe){
 						totalResponseData = this.generateResponse(403,"Unauthorized",null);
 					}catch(Exception e){
-						totalResponseData = this.generateResponse(501,"Not Implemented",null);
+						totalResponseData = this.generateResponse(500,"Internal Server Error",null);
 					}
 					break;
 				case "POST":
@@ -201,6 +201,7 @@ public class TinyHTTPd{
 			while(dis.available()>0){
 				fileData.add(dis.readByte());
 			}
+			dis.close();
 			assert fileData.size() != 0;
 			return fileData;
 		}
