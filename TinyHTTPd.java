@@ -112,8 +112,13 @@ public class TinyHTTPd{
 
 				//Verbose Output
 				if(verboseOutput){
-					System.out.println("Got connection from: "+client.getInetAddress().toString());
-					System.out.println("Request String: "+requestString);
+					System.out.println();
+					System.out.println("================================================================================");
+					System.out.println("=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>");
+					System.out.println("Got connection from: \n"+client.getInetAddress().toString());
+					System.out.println();
+					System.out.println("Request String: \n"+requestString);
+					System.out.println("=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>");
 				}
 
 				//Create an ArrayList with our response.
@@ -130,6 +135,9 @@ public class TinyHTTPd{
 				client.getOutputStream()
 					.write(responseBytes);
 
+				if(verboseOutput){
+					System.out.println("================================================================================");
+				}
 			}catch(IOException ioe){
 				System.err.println("IOException!\nIssue at TinyHTTPd.ClientConnection.run()");
 			}catch(Exception E){
@@ -261,6 +269,7 @@ public class TinyHTTPd{
 					.append(IFS)
 					.append("Date: ")
 					.append(date)
+					.append(IFS)
 					.append(ServerVer)
 					.append(IFS)
 					.append(lastModified)
@@ -322,6 +331,18 @@ public class TinyHTTPd{
 				default:
 					//HOW DID YOU GET HERE???
 					break;
+			}
+
+			if(verboseOutput){
+				System.out.println("<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=");
+				System.out.println("Responded with:");
+				System.out.println(header);
+				if(data != null){
+					System.out.println("CONTAINS FILE DATA");
+				}else{
+					System.out.println("CONTAINS NO FILE DATA");
+				}
+				System.out.println("<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=");
 			}
 
 			//We need to append a tail to our response.
